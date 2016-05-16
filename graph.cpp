@@ -8,22 +8,25 @@
 Graph::Graph(QWidget *parent) : QWidget(parent)
 {
     startTimer(20);
+    max = -20;
 }
 
 void Graph::setValues(QDateTime t1, float v1)
 {
+    if(v1 > max)
+        max = v1;
     date.push_back(t1);
     value.push_back(v1);
-    qDebug() << "t1: " << t1;
-    uint t = t1.toTime_t()/date.at(0).toTime_t();
-    qDebug() << "t: " << t;
-    qDebug() << "t1.toTime_t : " << t1.toTime_t();
-    qDebug() << "date.at(0).toTime_t : " << date.at(0).toTime_t();
+    uint t = t1.toTime_t() - date.at(0).toTime_t();
     float timeGraph = (float) t;
-    qDebug() << "time graph" << timeGraph;
     time.push_back(timeGraph);
-    qDebug() << "values were set";
-    qDebug() << value.size();
+}
+
+void Graph::clean()
+{
+    date.clear();
+    time.clear();
+    value.clear();
 }
 
 void Graph::paintEvent(QPaintEvent *e)
@@ -39,19 +42,15 @@ void Graph::paintEvent(QPaintEvent *e)
     painter.setBrush(brush);
     painter.drawRect(0,0,width()-1,height()-1);
 
-    QPointF p1(0,height()/2), p2(width()-1,height()/2);
-    painter.drawLine(p1,p2);
     pen.setColor("blue");
     painter.setPen(pen);
 
-    //qDebug() << "value.size: " << value.size();
     for(int i = 0; i < value.size(); i++){
-        float v = value.at(i)/height();
-        float t = time.at(i);
+        float v = height() - (value.at(i)/max)*height();
+        float t = time.at(i)/time.at(time.length()-1) * width();
         painter.drawPoint(t,v);
         if(i>0)
-            painter.drawLine(time.at(i-1),value.at(i-1),i,v);
-        //qDebug() << time.at(i) << " , " << value.at(i);
+            painter.drawLine(time.at(i-1)/time.at(time.length()-1) * width(), height() - (value.at(i-1)/max)*height(),t,v);
     }
 }
 
