@@ -4,6 +4,7 @@
 #include <QTcpSocket>
 #include <QMainWindow>
 #include <QDateTime>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +33,7 @@ private:
     Ui::MainWindow *ui;
     QTcpSocket *socket;
     bool isConnected;
+    QTimer *timer;
 };
 
 #endif // MAINWINDOW_H
