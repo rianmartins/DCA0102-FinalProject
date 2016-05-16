@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     socket = new QTcpSocket(this);
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(plotGraph()));
 
     isConnected = false;
 
@@ -33,20 +35,18 @@ void MainWindow::getData(QString ip)
         socket->write(data);
         socket->waitForBytesWritten(3000);
         socket->waitForReadyRead(3000);
-        qDebug() << socket->bytesAvailable();
+        qDebug() << "bytes available: " << socket->bytesAvailable();
+        ui->widget->clean();
         while(socket->bytesAvailable()){
             str = socket->readLine().replace("\n","").replace("\r","");
             list = str.split(" ");
             if(list.size() == 2){
-                datetime.fromString(list.at(0),Qt::ISODate);
+                datetime = datetime.fromString(list.at(0),Qt::ISODate);
                 str = list.at(1);
                 float v1 = str.toFloat();
-                qDebug() << "call set value";
                 ui->widget->setValues(datetime,v1);
-                qDebug() << "set value called";
             }
         }
-        ui->widget->repaint();
     }
 }
 
@@ -68,8 +68,8 @@ void MainWindow::plotGraph()
 {
     QString selectedIP;
     selectedIP = ui->listWidgetConnections->currentItem()->text();
-    qDebug() << selectedIP;
     getData(selectedIP);
+    timer->start(1000);
 }
 
 void MainWindow::setConnections()
