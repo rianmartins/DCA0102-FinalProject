@@ -12,14 +12,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(generateData()));
+
+    isConnected = false;
 }
 
 void MainWindow::tcpConnect(){
     QString ip = ui->lineEditIP->text();
     socket->connectToHost(ip,1234);
     if(socket->waitForConnected(3000)){
-        ui->textBrowserActivity->setText("IP: " + ip);
+        ui->textBrowserActivity->append("IP: " + ip);
         ui->textBrowserActivity->append("Connected...\n");
+        isConnected = true;
     }
     else{
         ui->textBrowserActivity->setText("Disconnected\n");
@@ -28,9 +31,10 @@ void MainWindow::tcpConnect(){
 
 void MainWindow::putData()
 {
-    tcpConnect();
+    if(!isConnected)
+        tcpConnect();
     if(socket->isOpen()){
-        timer->start(2000);
+        timer->start(1000);
     }
 }
 
