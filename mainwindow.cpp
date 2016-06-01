@@ -2,7 +2,6 @@
 #include "ui_mainwindow.h"
 #include "graph.h"
 #include <QDateTime>
-#include <QVector>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -17,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->pushButtonConnect,SIGNAL(clicked(bool)),this, SLOT(tcpConnect()));
     connect(ui->pushButtonPlot,SIGNAL(clicked(bool)),this, SLOT(plotGraph()));
+    connect(ui->listWidgetConnections,SIGNAL(itemSelectionChanged()),ui->widget,SLOT(clean()));
 }
 
 MainWindow::~MainWindow()
@@ -31,21 +31,47 @@ void MainWindow::getData(QString ip)
     QString str;
     QStringList list;
     QDateTime datetime;
+
+    float mv = -20;
+    QVector<QDateTime> date;
+    QVector<float> tempo;
+    QVector<float> val;
+    uint t;
+
     if(socket->isOpen()){
         socket->write(data);
         socket->waitForBytesWritten(3000);
         socket->waitForReadyRead(3000);
         qDebug() << "bytes available: " << socket->bytesAvailable();
-        ui->widget->clean();
         while(socket->bytesAvailable()){
             str = socket->readLine().replace("\n","").replace("\r","");
             list = str.split(" ");
             if(list.size() == 2){
                 datetime = datetime.fromString(list.at(0),Qt::ISODate);
+                date.push_back(datetime);
                 str = list.at(1);
+
                 float v1 = str.toFloat();
+                val.push_back(v1);
+                t = datetime.toTime_t() - date.at(0).toTime_t();
+                float t1 = (float) t;
+                tempo.push_back(t1);
+
                 ui->widget->setValues(datetime,v1);
             }
+            mv = ui->widget->getMaxValue();
+            QString maxValue = QString::number(mv);
+            ui->labelMax->setText("Value: " + maxValue);
+            float minT, maxT;
+            if(date.length()<=10)
+                minT = 0;
+            else
+                minT = tempo.at(tempo.length()-11);
+            maxT = tempo.at(tempo.length()-1);
+            QString minTime = QString::number(minT);
+            QString maxTime = QString::number(maxT);
+            ui->labelTimeMin->setText("Time: " + minTime);
+            ui->labelTimeMax->setText("Time: " + maxTime);
         }
     }
 }
@@ -69,7 +95,8 @@ void MainWindow::plotGraph()
     QString selectedIP;
     selectedIP = ui->listWidgetConnections->currentItem()->text();
     getData(selectedIP);
-    timer->start(1000);
+    if(!timer->isActive())
+        timer->start(3000);
 }
 
 void MainWindow::setConnections()
